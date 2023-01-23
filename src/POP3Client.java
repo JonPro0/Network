@@ -4,67 +4,63 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class POP3Client {
-   private Socket socket;
-   private Scanner reader;
-   private PrintWriter writer;
+    private static final String USERNAME = "anna";
+    private static final String PASSWORD = "geheim";
+    private Socket socket;
+    private Scanner reader;
+    private PrintWriter writer;
+    private Scanner tastatur;
 
-
-   public POP3Client(){
-       verbinden();
-       anmelden();
-       listeMail();
-   }
-
-
-
-    private void verbinden() {
-       try {
-           socket = new Socket("10.2.129.148", 10110);
-           reader = new Scanner(socket.getInputStream());
-           writer = new PrintWriter(socket.getOutputStream());
-       } catch (IOException e) {
-           System.err.println("Fehler beim verbinden");
-           System.exit(1);
-       }
-   }
-
-    private void anmelden() {
-       
+    public POP3Client() {
+        verbinden();
+        anmelden();
+        listeMails();
+        beendeVerbindung();
     }
 
+    private void verbinden() {
+        System.out.print("Versuche Verbindung... ");
+
+        try {
+            socket = new Socket("10.2.129.148", 10110);
+            reader = new Scanner(socket.getInputStream());
+            writer = new PrintWriter(socket.getOutputStream());
+            System.out.println("erfolgreich.");
+        } catch (IOException e) {
+            System.err.println("Fehler beim Verbinden mit 10.2.129.148 auf " + "Port 10110");
+            System.exit(1); // Status 1 bedeutet allgemeiner Fehler
+        }
+    }
+
+    /**
+     * Sende den String "USER anna" "+OK": Hat geklappt "-...": Fehler, beende
+     * Programm Und danach "PASS geheim"
+     */
+    private void anmelden() {
+        System.out.println("Hier kommt die Anmeldung hin");
+        writer.println("USER " + USERNAME );
+        writer.flush();
+    }
+
+    private void listeMails() {
+        System.out.println("Hier Arbeit für Felix und Nicht-Felixe.");
+    }
+
+    private void beendeVerbindung() {
+        System.out.println("Beende Verbindung");
+        try {
+            socket.close();
+        } catch (IOException e) {
+        }
+
+        System.out.println("Ciao, Bello.");
+    }
 
     public static void main(String[] args) {
-        try{
-            Socket socket = new Socket("10.2.129.148", 10110);
-            Scanner reader = new Scanner(socket.getInputStream());
-            PrintWriter writer = new PrintWriter(socket.getOutputStream());
-
-            String input = reader.nextLine();
-            System.out.println("Recieved: " + input);
-
-
-
-            input = reader.nextLine();
-            System.out.println("Recieved: " + input);
-            String botschaft = "";
-
-            while(!botschaft.equals("quit")){
-                System.out.print("EINGABE: ");
-                botschaft = tastatur.nextLine();
-
-                writer.println(botschaft);
-                writer.flush();
-
-                input = reader.nextLine();
-                System.out.println("Recieved: " + input);
-            }
-
-
-
-            socket.close();
-            System.out.println("Verbindung getrennt!");
-        }  catch (IOException e) {
-            e.printStackTrace();
-        }
+        new POP3Client();
+        // String input = reader.nextLine();
+        // botschaft.startsWith("+")
+        // writer.println(botschaft);
+        // writer.flush();
     }
 }
