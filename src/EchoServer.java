@@ -28,7 +28,7 @@ public class EchoServer {
 
             } catch (IOException e) {
                 System.err.println("Fehler beim Verbinden mit dem neuen Client");
-                //TODO: Sinnvolle Fehlerbehandlung
+                e.printStackTrace();
                 System.exit(1);
             }
         }
@@ -59,6 +59,7 @@ public class EchoServer {
             client.close();
         } catch (IOException e) {
             System.err.println("HILFE");
+            e.printStackTrace();
         }
     }
 
@@ -66,3 +67,5 @@ public class EchoServer {
         new EchoServer().start();
     }
 }
+
+
