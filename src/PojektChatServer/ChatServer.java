@@ -4,6 +4,7 @@ import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 /*
  * Beliebig viele Clients können sich über Port 10666 verbinden und miteinander
@@ -67,6 +68,8 @@ class ChatServerClientThread extends Thread {
     private int correctanswer;
     private String question;
 
+    private long[] rangliste = new long[100];
+
 
 
     public ChatServerClientThread(ChatServer server, Socket clientSocket) {
@@ -112,9 +115,23 @@ class ChatServerClientThread extends Thread {
                     writer.println(
                             "/name -> Ändere deinen Namen \n" +
                             "/stelleMatheQuiz -> Stelle den anderen Nutzern eine Mathe Frage\n" +
-                            "/antworteAufQuiz -> Antworte auf ein Quiz, falls eins vorhanden ist");
+                            "/antworteAufQuiz -> Antworte auf ein Quiz, falls eins vorhanden ist\n" +
+                            "/starteSpeedTippen -> Starte ein Spiel gegen User oder Single Player Game, in dem du so schnell wie möglich Buchstaben Kombinationen eintippen musst\n" +
+                            "/rangListe -> zeigt dir die aktuelle Rangliste des Speed-Tipp-Spiels"
+                    );
                     writer.flush();
 
+                }
+
+                if (rangliste[0] == 0){
+                    Arrays.fill(rangliste, Long.MAX_VALUE);
+                }
+
+                if (empfangen.equalsIgnoreCase("/name")) {
+                    writer.println("Wie möchtest du heißen?");
+                    writer.flush();
+                    name = reader.readLine();
+                    this.setName(name);
                 }
 
                 if (empfangen.equalsIgnoreCase("/stelleMatheQuiz")) {
@@ -130,12 +147,6 @@ class ChatServerClientThread extends Thread {
 
                 }
 
-                if (empfangen.equalsIgnoreCase("/name")) {
-                    writer.println("Wie möchtest du heißen?");
-                    writer.flush();
-                    name = reader.readLine();
-                    this.setName(name);
-                }
 
                 if (empfangen.equalsIgnoreCase("/antworteAufQuiz")) {
                     if(question == null){
@@ -146,6 +157,21 @@ class ChatServerClientThread extends Thread {
                         writer.flush();
                         checkAnswer(reader.readLine());
                     }
+                }
+
+                if (empfangen.equalsIgnoreCase("/starteSpeedTippen")) {
+                    startGame();
+                }
+
+                if (empfangen.equalsIgnoreCase("/rangliste")) {
+                    writer.println("Hier siehst du die ersten 5 Plätze:" +
+                            "\n1.   |   " + rangliste[0] / 1000 + "(seconds)"
+                            +  "\n2.   |   " + rangliste[1] / 1000 + "(seconds)"
+                            +  "\n3.   |   " + rangliste[2] / 1000 + "(seconds)"
+                            +  "\n4.   |   " + rangliste[3] / 1000 + "(seconds)"
+                            +  "\n5.   |   " + rangliste[4] / 1000 + "(seconds)"
+                            );
+                    writer.flush();
                 }
 
                 server.sendeAnAlle(this, empfangen);
@@ -165,6 +191,78 @@ class ChatServerClientThread extends Thread {
         }
 
         System.out.println("ClientThread beendet: " + name);
+    }
+
+    private void startGame() throws IOException {
+        String[] array = new String[5];
+        for (int i = 0; i < 5; i++) {
+            array[i] = getAlphaNumericString(5);
+        }
+        int result = 0;
+        long startTime = System.currentTimeMillis();
+        while (result < 5){
+            writer.println("Tippe den folgenden String mit richtiger Groß/ Kleinschreibung ab: " + array[result]);
+            writer.flush();
+            String antwort = reader.readLine();
+            if (antwort.equals(array[result])) result++;
+            else {
+                writer.println("Deine Antwort war falsch, versuche es erneut");
+                writer.flush();
+            }
+        }
+        long time = System.currentTimeMillis() - startTime;
+        fuegeInArray(time);
+    }
+
+    private void fuegeInArray(long time) {
+        for (int i = 0; i < rangliste.length; i++) {
+            if (rangliste[i] == Long.MAX_VALUE){
+                rangliste[i] = time;
+                break;
+            }
+        }
+        BubbleSort.bubbleSort(rangliste);
+        int userPosition = 0;
+        for (int i = 0; i < rangliste.length; i++) {
+            if (rangliste[i] == time){
+                userPosition = i+1;
+                break;
+            }
+        }
+        writer.println("1.   |   " + rangliste[0] / 1000 + "(seconds)"
+                    +  "\n2.   |   " + rangliste[1] / 1000 + "(seconds)"
+                    +  "\n3.   |   " + rangliste[2] / 1000 + "(seconds)"
+                    +  "\n Deine Position: " + userPosition + ".   |   " + rangliste[userPosition - 1] / 1000 + "(seconds)"
+        );
+        writer.flush();
+
+    }
+
+    static String getAlphaNumericString(int n)
+    {
+
+        // choose a Character random from this String
+        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+                + "123456789"
+                + "abcdefghijklmnopqrstuvxyz";
+
+        // create StringBuffer size of AlphaNumericString
+        StringBuilder sb = new StringBuilder(n);
+
+        for (int i = 0; i < n; i++) {
+
+            // generate a random number between
+            // 0 to AlphaNumericString variable length
+            int index
+                    = (int)(AlphaNumericString.length()
+                    * Math.random());
+
+            // add Character one by one in end of sb
+            sb.append(AlphaNumericString
+                    .charAt(index));
+        }
+
+        return sb.toString();
     }
 
     private void checkAnswer(String response) {
